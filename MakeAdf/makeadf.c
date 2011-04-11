@@ -21,15 +21,15 @@ void usage()
 		"  makeadf [OPTION] TARGET FILE [...]\n"
 		"\n"
 		"  Available options:\n"
-		"    -v [VOLUME ID]    set volume ID, default: 0\n"
+		"    -l [LABEL]    set volume label, default: \"empty\"\n"
 		"\n"
 		"  Example:\n"
-		"    makeadf my_floppy.adf file.txt\n"
+		"    makeadf -l myfloppy myfloppy.adf file.txt\n"
 		"\n"
 	);
 }
 
-int createFloppy(char* filename, char* label, int volumeNum, char** files, int numFiles)
+int createFloppy(char* filename, char* label, char** files, int numFiles)
 {
 	adfEnvInitDefault();
 
@@ -86,27 +86,25 @@ int createFloppy(char* filename, char* label, int volumeNum, char** files, int n
 	adfUnMountDev(floppy);
 	adfEnvCleanUp();
 
+	printf("done\n");
+
 	return 0;
 }
 
 int main(int argc, char** argv)
 {
-	int volume = 0;
 	char defaultLabel[] = "empty";
 	char* label = defaultLabel;
 	int c;
 
-	while ((c = getopt (argc, argv, "v:l:")) != -1){
+	while ((c = getopt (argc, argv, "l:")) != -1){
 		switch (c)
 		{
-			case 'v':
-				volume = atoi(optarg);
-				break;
 			case 'l':
 				label = optarg;
 				break;
 			case '?':
-				if (optopt == 'v' || optopt == 'l'){
+				if (optopt == 'l'){
 					fprintf (stderr, "Option -%c requires an argument.\n", optopt);
 				} else if (isprint (optopt)) {
 					fprintf (stderr, "Unknown option `-%c'.\n", optopt);
@@ -124,5 +122,5 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-	return createFloppy(argv[optind], label, volume, argv + optind + 1, argc - optind - 1);
+	return createFloppy(argv[optind], label, argv + optind + 1, argc - optind - 1);
 }
