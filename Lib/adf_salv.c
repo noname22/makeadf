@@ -73,7 +73,7 @@ void adfFreeDelList(struct List* list)
 struct List* adfGetDelEnt(struct Volume *vol)
 {
     struct GenBlock *block;
-    long i;
+    int32_t i;
     struct List *list, *head;
     BOOL delEnt;
 
@@ -226,7 +226,7 @@ RETCODE adfUndelDir(struct Volume* vol, SECTNUM pSect, SECTNUM nSect,
  */
 RETCODE adfUndelFile(struct Volume* vol, SECTNUM pSect, SECTNUM nSect, struct bFileHeaderBlock* entry)
 {
-    long i;
+    int32_t i;
     char name[MAXNAMELEN+1];
     struct bEntryBlock parent;
     RETCODE rc;
@@ -312,11 +312,11 @@ RETCODE adfCheckFile(struct Volume* vol, SECTNUM nSect,
     int n;
  
     adfGetFileBlocks(vol,file,&fileBlocks);
-/*printf("data %ld ext %ld\n",fileBlocks.nbData,fileBlocks.nbExtens);*/
+/*printf("data %d ext %d\n",fileBlocks.nbData,fileBlocks.nbExtens);*/
     if (isOFS(vol->dosType)) {
         /* checks OFS datablocks */
         for(n=0; n<fileBlocks.nbData; n++) {
-/*printf("%ld\n",fileBlocks.data[n]);*/
+/*printf("%d\n",fileBlocks.data[n]);*/
             adfReadDataBlock(vol,fileBlocks.data[n],&dataBlock);
             if (dataBlock.headerKey!=fileBlocks.header)
                 (*adfEnv.wFct)("adfCheckFile : headerKey incorrect");

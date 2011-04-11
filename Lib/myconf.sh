@@ -3,9 +3,10 @@
 cat >myctest.c <<END
 
 #include<stdio.h>
+#include<stdint.h>
 
 union u{
-    long l;
+    int32_t l;
     char c[4];
     };
 
@@ -13,9 +14,9 @@ int main(int argc, char *argv[])
 {
     union u val;
 
-    printf("%d ",sizeof(long));
-    printf("%d ",sizeof(short));
-    printf("%d ",sizeof(int));
+    printf("%ld ",sizeof(int32_t));
+    printf("%ld ",sizeof(int16_t));
+    printf("%ld ",sizeof(int));
     
     val.l=1L;
     if (val.c[3]==1)
@@ -26,7 +27,7 @@ int main(int argc, char *argv[])
 
 END
 
-gcc myctest.c -o myctest
+gcc -std=gnu99 myctest.c -o myctest
 rm myctest.c
 
 if [ `./myctest |cut -d' ' -f 1` != 4 ]
@@ -51,4 +52,10 @@ else
     echo Big Endian machine detected
 fi
 
-rm myctest.exe myctest
+if [ -f myctest.exe ]; then
+	rm myctest.exe
+fi
+
+if [ -f myctest ]; then
+	rm myctest
+fi

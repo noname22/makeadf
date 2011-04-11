@@ -13,7 +13,7 @@ VERSION=1.0
 RELEASE=1
 INSTDIR=/usr/local/unadf
 
-all: demo tests lib
+all: demo lib #tests
 
 lib: $(LIBDIR)/$(LIBNAME)
 	cp $(LIBDIR)/$(LIBNAME) ./Bin/Linux/
@@ -23,14 +23,14 @@ $(LIBDIR)/$(LIBNAME): Lib/defendian.h
 
 clean:
 	cd $(LIBDIR) && ($(MAKE) clean || true)
-	cd $(TESTDIR) && ($(MAKE) clean || true)
+	#cd $(TESTDIR) && ($(MAKE) clean || true)
 	cd $(DEMODIR) && ($(MAKE) clean || true)
 	rm -rf PKG *~ unadf*.rpm
 	rm -f unadf-${VERSION}.spec
 
 dep Lib/defendian.h:
 	cd $(LIBDIR) && ($(MAKE) dep || true)
-	cd $(TESTDIR) && ($(MAKE) dep || true)
+	#cd $(TESTDIR) && ($(MAKE) dep || true)
 	cd $(DEMODIR) && ($(MAKE) dep || true)
 
 zip:
@@ -54,9 +54,9 @@ rpm:	unadf-${VERSION}.spec preprpm
 unadf-${VERSION}.spec: gen_spec.sh
 	./gen_spec.sh ${VERSION} ${RELEASE} unadf FilesToInstall >unadf-${VERSION}.spec
 
-zipdump:
-	(rm adfdump.zip) || true
-	zip -9r dumps.zip Dumps Test
+#zipdump:
+#	(rm adfdump.zip) || true
+#	zip -9r dumps.zip Dumps Test
 
 binw32:
 	(rm binw32.zip) || true
@@ -80,3 +80,4 @@ tests: $(LIBDIR)/$(LIBNAME)
 	cd $(TESTDIR) && ./bigdev.sh
 
 
+# DO NOT DELETE

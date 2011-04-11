@@ -5,7 +5,7 @@ LIBNAME=libadf.a
 
 DEPEND=makedepend
 
-CFLAGS=-I$(LIBDIR) -O2 -Wall -Wno-uninitialized -pedantic
+CFLAGS=-I$(LIBDIR) -Wall -Wno-uninitialized -pedantic -std=gnu99 -ggdb
 LDFLAGS=-L$(LIBDIR) -ladf
 
 EXES= unadf

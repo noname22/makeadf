@@ -74,12 +74,12 @@ void printEnt(struct Volume *vol, struct Entry* entry, char *path, BOOL sect)
     if (entry->type==ST_DIR)
         printf("         ");
     else
-        printf("%7ld  ",entry->size);
+        printf("%7d  ",entry->size);
 
 	printf("%4d/%02d/%02d  %2d:%02d:%02d ",entry->year, entry->month, entry->days,
         entry->hour, entry->mins, entry->secs);
     if (sect)
-        printf(" %06ld ",entry->sector);
+        printf(" %06d ",entry->sector);
 
     if (strlen(path)>0)
         printf(" %s/",path);
@@ -101,7 +101,7 @@ void extractFile(struct Volume *vol, char* name, char* path, unsigned char *extb
 {
     struct File *file;
     FILE* out;
-    long n;
+    int32_t n;
     char *filename;
 
     filename = NULL;
@@ -243,7 +243,7 @@ void printDev(struct Device* dev)
         printf("???"); break;
     }
 
-    printf(". Cylinders = %ld, Heads = %ld, Sectors = %ld",dev->cylinders,dev->heads,dev->sectors);
+    printf(". Cylinders = %d, Heads = %d, Sectors = %d",dev->cylinders,dev->heads,dev->sectors);
 
     printf(". Volumes = %d\n",dev->nVol);
 }
@@ -273,7 +273,7 @@ void printVol(struct Volume* vol, int volNum)
     if (vol->volName!=NULL)
         printf(" \"%s\"", vol->volName);
 
-    printf(" between sectors [%ld-%ld].",vol->firstBlock, vol->lastBlock);
+    printf(" between sectors [%d-%d].",vol->firstBlock, vol->lastBlock);
 
     printf(" %s ",isFFS(vol->dosType) ? "FFS" : "OFS");
     if (isINTL(vol->dosType))

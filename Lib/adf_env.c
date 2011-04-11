@@ -36,7 +36,7 @@
 #include"defendian.h"
 
 union u{
-    long l;
+    int32_t l;
     char c[4];
     };
 
@@ -46,7 +46,7 @@ void rwHeadAccess(SECTNUM physical, SECTNUM logical, BOOL write)
 {
     /* display the physical sector, the logical block, and if the access is read or write */
 
-    fprintf(stderr, "phy %ld / log %ld : %c\n", physical, logical, write ? 'W' : 'R');
+    fprintf(stderr, "phy %d / log %d : %c\n", physical, logical, write ? 'W' : 'R');
 }
 
 void progressBar(int perCentDone)
@@ -71,16 +71,16 @@ void Changed(SECTNUM nSect, int changedType)
 {
 /*    switch(changedType) {
     case ST_FILE:
-        fprintf(stderr,"Notification : sector %ld (FILE)\n",nSect);
+        fprintf(stderr,"Notification : sector %d (FILE)\n",nSect);
         break;
     case ST_DIR:
-        fprintf(stderr,"Notification : sector %ld (DIR)\n",nSect);
+        fprintf(stderr,"Notification : sector %d (DIR)\n",nSect);
         break;
     case ST_ROOT:
-        fprintf(stderr,"Notification : sector %ld (ROOT)\n",nSect);
+        fprintf(stderr,"Notification : sector %d (ROOT)\n",nSect);
         break;
     default:
-        fprintf(stderr,"Notification : sector %ld (???)\n",nSect);
+        fprintf(stderr,"Notification : sector %d (???)\n",nSect);
     }
 */}
 
@@ -95,10 +95,10 @@ void adfEnvInitDefault()
 
     /* internal checking */
 
-    if (sizeof(short)!=2) 
-        { fprintf(stderr,"Compilation error : sizeof(short)!=2\n"); exit(1); }
-    if (sizeof(long)!=4) 
-        { fprintf(stderr,"Compilation error : sizeof(short)!=2\n"); exit(1); }
+    if (sizeof(int16_t)!=2) 
+        { fprintf(stderr,"Compilation error : sizeof(int16_t)!=2\n"); exit(1); }
+    if (sizeof(int32_t)!=4) 
+        { fprintf(stderr,"Compilation error : sizeof(int16_t)!=2\n"); exit(1); }
     if (sizeof(struct bEntryBlock)!=512)
         { fprintf(stderr,"Internal error : sizeof(struct bEntryBlock)!=512\n"); exit(1); }
     if (sizeof(struct bRootBlock)!=512)

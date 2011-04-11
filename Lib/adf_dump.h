@@ -26,12 +26,14 @@
  *
  */
 
+#include <stdint.h>
+
 PREFIX     struct Device*
-adfCreateDumpDevice(char* filename, long cyl, long heads, long sec);
+adfCreateDumpDevice(char* filename, int32_t cyl, int32_t heads, int32_t sec);
 PREFIX RETCODE adfCreateHdFile(struct Device* dev, char* volName, int volType);
 BOOL adfInitDumpDevice(struct Device* dev, char* name,BOOL);
-BOOL adfReadDumpSector(struct Device *dev, long n, int size, unsigned char* buf);
-BOOL adfWriteDumpSector(struct Device *dev, long n, int size, unsigned char* buf);
+BOOL adfReadDumpSector(struct Device *dev, int32_t n, int size, unsigned char* buf);
+BOOL adfWriteDumpSector(struct Device *dev, int32_t n, int size, unsigned char* buf);
 void adfReleaseDumpDevice(struct Device *dev);
 
 

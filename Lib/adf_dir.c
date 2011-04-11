@@ -140,7 +140,7 @@ RETCODE adfRenameEntry(struct Volume *vol, SECTNUM pSect, char *oldName,
                 }
             }
             nSect2 = previous.nextSameHash;
-/*printf("sect=%ld\n",nSect2);*/
+/*printf("sect=%d\n",nSect2);*/
         }while(nSect2!=0);
         
         previous.nextSameHash = nSect;
@@ -202,7 +202,7 @@ RETCODE adfRemoveEntry(struct Volume *vol, SECTNUM pSect, char *name)
         (*adfEnv.wFct)(buf);
         return RC_ERROR;
     }
-/*    printf("name=%s  nSect2=%ld\n",name, nSect2);*/
+/*    printf("name=%s  nSect2=%d\n",name, nSect2);*/
 
     /* in parent hashTable */
     if (nSect2==0) {
@@ -237,7 +237,7 @@ RETCODE adfRemoveEntry(struct Volume *vol, SECTNUM pSect, char *name)
             (*adfEnv.notifyFct)(pSect,ST_DIR);
     }
     else {
-      sprintf(buf, "adfRemoveEntry : secType %ld not supported", entry.secType);
+      sprintf(buf, "adfRemoveEntry : secType %d not supported", entry.secType);
         (*adfEnv.wFct)(buf);
         return RC_ERROR;
     }
@@ -291,7 +291,7 @@ RETCODE adfSetEntryComment(struct Volume* vol, SECTNUM parSect, char* name,
  *
  */
 RETCODE adfSetEntryAccess(struct Volume* vol, SECTNUM parSect, char* name,
-    long newAcc)
+    int32_t newAcc)
 {
     struct bEntryBlock parent, entry;
     SECTNUM nSect;
@@ -365,7 +365,7 @@ struct List* adfGetRDirEnt(struct Volume* vol, SECTNUM nSect, BOOL recurs )
     int i;
     struct Entry *entry;
     SECTNUM nextSector;
-    long *hashTable;
+    int32_t *hashTable;
     struct bEntryBlock parent;
 
 
@@ -542,7 +542,7 @@ RETCODE adfEntBlock2Entry(struct bEntryBlock *entryBlk, struct Entry *entry)
     entry->name = strdup(buf);
     if (entry->name==NULL)
         return RC_MALLOC;
-/*printf("len=%d name=%s parent=%ld\n",entryBlk->nameLen, entry->name,entry->parent );*/
+/*printf("len=%d name=%s parent=%d\n",entryBlk->nameLen, entry->name,entry->parent );*/
     adfDays2Date( entryBlk->days, &(entry->year), &(entry->month), &(entry->days));
 	entry->hour = entryBlk->mins/60;
     entry->mins = entryBlk->mins%60;
@@ -595,7 +595,7 @@ RETCODE adfEntBlock2Entry(struct bEntryBlock *entryBlk, struct Entry *entry)
  * adfNameToEntryBlk
  *
  */
-SECTNUM adfNameToEntryBlk(struct Volume *vol, long ht[], char* name, 
+SECTNUM adfNameToEntryBlk(struct Volume *vol, int32_t ht[], char* name, 
     struct bEntryBlock *entry, SECTNUM *nUpdSect)
 {
     int hashVal;
@@ -653,7 +653,7 @@ for(i=0; i<HT_SIZE; i++) printf("ht[%d]=%d    ",i,ht[i]);
  *
  */
     char* 
-adfAccess2String(long acc)
+adfAccess2String(int32_t acc)
 {
     static char ret[8+1];
 
@@ -815,7 +815,7 @@ myToUpper( unsigned char *nstr, unsigned char *ostr, int nlen, BOOL intl )
     int 
 adfGetHashValue(unsigned char *name, BOOL intl)
 {
-    unsigned long hash, len;
+    uint32_t hash, len;
     unsigned int i;
     unsigned char upper;
 
@@ -839,11 +839,11 @@ adfGetHashValue(unsigned char *name, BOOL intl)
  */
 void printEntry(struct Entry* entry)
 {
-    printf("%-30s %2d %6ld ", entry->name, entry->type, entry->sector);
+    printf("%-30s %2d %6d ", entry->name, entry->type, entry->sector);
     printf("%2d/%02d/%04d %2d:%02d:%02d",entry->days, entry->month, entry->year,
         entry->hour, entry->mins, entry->secs);
     if (entry->type==ST_FILE)
-        printf("%8ld ",entry->size);
+        printf("%8d ",entry->size);
     else
         printf("         ");
     if (entry->type==ST_FILE || entry->type==ST_DIR)
@@ -975,7 +975,7 @@ RETCODE adfReadEntryBlock(struct Volume* vol, SECTNUM nSect, struct bEntryBlock 
     }
     if (ent->nameLen<0 || ent->nameLen>MAXNAMELEN || ent->commLen>MAXCMMTLEN) {
         (*adfEnv.wFct)("adfReadEntryBlock : nameLen or commLen incorrect"); 
-        printf("nameLen=%d, commLen=%d, name=%s sector%ld\n",
+        printf("nameLen=%d, commLen=%d, name=%s sector%d\n",
             ent->nameLen,ent->commLen,ent->name, ent->headerKey);
     }
 
@@ -990,7 +990,7 @@ RETCODE adfReadEntryBlock(struct Volume* vol, SECTNUM nSect, struct bEntryBlock 
 RETCODE adfWriteEntryBlock(struct Volume* vol, SECTNUM nSect, struct bEntryBlock *ent)
 {
     unsigned char buf[512];
-    unsigned long newSum;
+    uint32_t newSum;
    
 
     memcpy(buf, ent, sizeof(struct bEntryBlock));
@@ -1015,7 +1015,7 @@ RETCODE adfWriteEntryBlock(struct Volume* vol, SECTNUM nSect, struct bEntryBlock
 RETCODE adfWriteDirBlock(struct Volume* vol, SECTNUM nSect, struct bDirBlock *dir)
 {
     unsigned char buf[512];
-    unsigned long newSum;
+    uint32_t newSum;
     
 
 /*printf("wdirblk=%d\n",nSect);*/

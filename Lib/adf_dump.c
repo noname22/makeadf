@@ -44,7 +44,7 @@ extern struct Env adfEnv;
 RETCODE adfInitDumpDevice(struct Device* dev, char* name, BOOL ro)
 {
     struct nativeDevice* nDev;
-    long size;
+    int32_t size;
 
     nDev = (struct nativeDevice*)dev->nativeDev;
 
@@ -92,14 +92,14 @@ RETCODE adfInitDumpDevice(struct Device* dev, char* name, BOOL ro)
  * adfReadDumpSector
  *
  */
-RETCODE adfReadDumpSector(struct Device *dev, long n, int size, unsigned char* buf)
+RETCODE adfReadDumpSector(struct Device *dev, int32_t n, int size, unsigned char* buf)
 {
     struct nativeDevice* nDev;
     int r;
 /*puts("adfReadDumpSector");*/
     nDev = (struct nativeDevice*)dev->nativeDev;
     r = fseek(nDev->fd, 512*n, SEEK_SET);
-/*printf("nnn=%ld size=%d\n",n,size);*/
+/*printf("nnn=%d size=%d\n",n,size);*/
     if (r==-1)
         return RC_ERROR;
 /*puts("123");*/
@@ -117,7 +117,7 @@ RETCODE adfReadDumpSector(struct Device *dev, long n, int size, unsigned char* b
  * adfWriteDumpSector
  *
  */
-RETCODE adfWriteDumpSector(struct Device *dev, long n, int size, unsigned char* buf)
+RETCODE adfWriteDumpSector(struct Device *dev, int32_t n, int size, unsigned char* buf)
 {
     struct nativeDevice* nDev;
     int r;
@@ -172,7 +172,7 @@ RETCODE adfCreateHdFile(struct Device* dev, char* volName, int volType)
         return RC_ERROR;
     }
 
-    dev->volList[0] = adfCreateVol( dev, 0L, (long)dev->cylinders, volName, volType );
+    dev->volList[0] = adfCreateVol( dev, 0L, (int32_t)dev->cylinders, volName, volType );
     if (dev->volList[0]==NULL) {
         free(dev->volList);
         return RC_ERROR;
@@ -191,12 +191,12 @@ RETCODE adfCreateHdFile(struct Device* dev, char* volName, int volType)
  * returns NULL if failed
  */ 
     struct Device*
-adfCreateDumpDevice(char* filename, long cylinders, long heads, long sectors)
+adfCreateDumpDevice(char* filename, int32_t cylinders, int32_t heads, int32_t sectors)
 {
     struct Device* dev;
     unsigned char buf[LOGICAL_BLOCK_SIZE];
     struct nativeDevice* nDev;
-/*    long i;*/
+/*    int32_t i;*/
     int r;
 	
     dev=(struct Device*)malloc(sizeof(struct Device));

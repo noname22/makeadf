@@ -25,20 +25,22 @@
  */
 
 
+#include <stdint.h>
+
 #ifndef _ADF_DEFS_H
 #define _ADF_DEFS_H 1
 
 #define ADFLIB_VERSION "0.7.11a"
 #define ADFLIB_DATE "January 20th, 2007"
 
-#define SECTNUM long
-#define RETCODE long
+#define SECTNUM int32_t
+#define RETCODE int32_t
 
 #define TRUE    1
 #define FALSE   0
 
-#define ULONG   unsigned long
-#define USHORT  unsigned short
+#define ULONG   uint32_t
+#define USHORT  uint16_t
 #define UCHAR   unsigned char
 #define BOOL    int
 

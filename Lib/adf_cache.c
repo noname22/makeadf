@@ -27,6 +27,7 @@
 
 #include<stdlib.h>
 #include<string.h>
+#include<stdint.h>
 
 #include"adf_defs.h"
 #include"adf_str.h"
@@ -253,9 +254,9 @@ int adfEntry2CacheEntry(struct bEntryBlock *entry, struct CacheEntry *newEntry)
     else
         newEntry->size = 0L;
     newEntry->protect = entry->access;
-    newEntry->days = (short)entry->days;
-    newEntry->mins = (short)entry->mins;
-    newEntry->ticks  = (short)entry->ticks;
+    newEntry->days = (int16_t)entry->days;
+    newEntry->mins = (int16_t)entry->mins;
+    newEntry->ticks  = (int16_t)entry->ticks;
     newEntry->type = (signed char)entry->secType;
     newEntry->nLen = entry->nameLen;
     memcpy(newEntry->name, entry->name, newEntry->nLen);
@@ -361,7 +362,7 @@ RETCODE adfAddInCache(struct Volume *vol, struct bEntryBlock *parent,
     int entryLen;
 
     entryLen = adfEntry2CacheEntry(entry, &newEntry);
-/*printf("adfAddInCache--%4ld %2d %6ld %8lx %4d %2d:%02d:%02d %30s %22s\n",
+/*printf("adfAddInCache--%4ld %2d %6d %8lx %4d %2d:%02d:%02d %30s %22s\n",
     newEntry.header, newEntry.type, newEntry.size, newEntry.protect,
     newEntry.days, newEntry.mins/60, newEntry.mins%60, 
 	newEntry.ticks/50,
@@ -375,7 +376,7 @@ RETCODE adfAddInCache(struct Volume *vol, struct bEntryBlock *parent,
 /*printf("parent=%4ld\n",dirc.parent);*/
         while(n < dirc.recordsNb) {
             adfGetCacheEntry(&dirc, &offset, &caEntry);
-/*printf("*%4ld %2d %6ld %8lx %4d %2d:%02d:%02d %30s %22s\n",
+/*printf("*%4ld %2d %6d %8lx %4d %2d:%02d:%02d %30s %22s\n",
     caEntry.header, caEntry.type, caEntry.size, caEntry.protect,
     caEntry.days, caEntry.mins/60, caEntry.mins%60, 
 	caEntry.ticks/50,
@@ -424,7 +425,7 @@ RETCODE adfAddInCache(struct Volume *vol, struct bEntryBlock *parent,
 			return RC_ERROR;
         dirc.nextDirC = nCache;
     }
-/*printf("dirc.headerKey=%ld\n",dirc.headerKey);*/
+/*printf("dirc.headerKey=%d\n",dirc.headerKey);*/
     if (adfWriteDirCBlock(vol, dirc.headerKey, &dirc)!=RC_OK)
 		return RC_ERROR;
 /*if (strcmp(entry->name,"file_5u")==0)
@@ -454,7 +455,7 @@ RETCODE adfUpdateCache(struct Volume *vol, struct bEntryBlock *parent,
     nSect = parent->extension;
     found = FALSE;
     do {
-/*printf("dirc=%ld\n",nSect);*/
+/*printf("dirc=%d\n",nSect);*/
         if (adfReadDirCBlock(vol, nSect, &dirc)!=RC_OK)
 			return RC_ERROR;
         offset = 0; n = 0;
@@ -545,7 +546,7 @@ RETCODE adfCreateEmptyCache(struct Volume *vol, struct bEntryBlock *parent, SECT
         dirc.parent = parent->headerKey;
     else {
         (*adfEnv.wFct)("adfCreateEmptyCache : unknown secType");
-/*printf("secType=%ld\n",parent->secType);*/
+/*printf("secType=%d\n",parent->secType);*/
     }
         
     dirc.recordsNb = 0;
@@ -588,10 +589,10 @@ RETCODE adfReadDirCBlock(struct Volume *vol, SECTNUM nSect, struct bDirCacheBloc
  * adfWriteDirCblock
  *
  */
-RETCODE adfWriteDirCBlock(struct Volume* vol, long nSect, struct bDirCacheBlock* dirc)
+RETCODE adfWriteDirCBlock(struct Volume* vol, int32_t nSect, struct bDirCacheBlock* dirc)
 {
     unsigned char buf[LOGICAL_BLOCK_SIZE];
-    unsigned long newSum;
+    uint32_t newSum;
  
     dirc->type = T_DIRC;
     dirc->headerKey = nSect; 

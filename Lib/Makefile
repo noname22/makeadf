@@ -15,7 +15,7 @@ TAR=tar
 
 DEFINES= 
 
-CFLAGS=$(DEFINES) -I${NATIV_DIR} -I.. -I. -Wall -O2 -pedantic
+CFLAGS=$(DEFINES) -I${NATIV_DIR} -I.. -I. -Wall -ggdb -std=gnu99
 
 CC=gcc 
 DEPEND=makedepend

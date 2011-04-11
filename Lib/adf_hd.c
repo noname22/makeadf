@@ -81,9 +81,9 @@ void adfDeviceInfo(struct Device *dev)
 {
 	int i;
 	
-	printf("Cylinders   = %ld\n",dev->cylinders);
-    printf("Heads       = %ld\n",dev->heads);
-    printf("Sectors/Cyl = %ld\n\n",dev->sectors);
+	printf("Cylinders   = %d\n",dev->cylinders);
+    printf("Heads       = %d\n",dev->heads);
+    printf("Sectors/Cyl = %d\n\n",dev->sectors);
 	if (!dev->isNativeDev)
         printf("Dump device\n\n");
     else
@@ -106,12 +106,12 @@ void adfDeviceInfo(struct Device *dev)
 
     for(i=0; i<dev->nVol; i++) {
         if (dev->volList[i]->volName)
-            printf("%2d :  %7ld ->%7ld, \"%s\"", i,
+            printf("%2d :  %7d ->%7d, \"%s\"", i,
 			dev->volList[i]->firstBlock,
 			dev->volList[i]->lastBlock,
 			dev->volList[i]->volName);
         else
-            printf("%2d :  %7ld ->%7ld\n", i,
+            printf("%2d :  %7d ->%7d\n", i,
 			dev->volList[i]->firstBlock,
 			dev->volList[i]->lastBlock);
         if (dev->volList[i]->mounted)
@@ -150,7 +150,7 @@ RETCODE adfMountHdFile(struct Device *dev)
 {
     struct Volume* vol;
     unsigned char buf[512];
-    long size;
+    int32_t size;
     BOOL found;
 
     dev->devType = DEVTYPE_HARDFILE;
@@ -178,9 +178,9 @@ RETCODE adfMountHdFile(struct Device *dev)
     vol->firstBlock = 0;
 
     size = dev->size + 512-(dev->size%512);
-/*printf("size=%ld\n",size);*/
+/*printf("size=%d\n",size);*/
     vol->rootBlock = (size/512)/2;
-/*printf("root=%ld\n",vol->rootBlock);*/
+/*printf("root=%d\n",vol->rootBlock);*/
     do {
         adfReadDumpSector(dev, vol->rootBlock, 512, buf);
         found = swapLong(buf)==T_HEADER && swapLong(buf+508)==ST_ROOT;
@@ -211,7 +211,7 @@ RETCODE adfMountHd(struct Device *dev)
     struct bPARTblock part;
     struct bFSHDblock fshd;
 	struct bLSEGblock lseg;
-	long next;
+	int32_t next;
     struct List *vList, *listRoot;
     int i;
     struct Volume* vol;
@@ -631,7 +631,7 @@ RETCODE adfCreateHd(struct Device* dev, int n, struct Partition** partList )
     dev->nVol = n;
 /*
 vol=dev->volList[0];
-printf("0first=%ld last=%ld root=%ld\n",vol->firstBlock,
+printf("0first=%d last=%d root=%d\n",vol->firstBlock,
  vol->lastBlock, vol->rootBlock);
 */
 
@@ -732,7 +732,7 @@ adfReadRDSKblock( struct Device* dev, struct bRDSKblock* blk )
 adfWriteRDSKblock(struct Device *dev, struct bRDSKblock* rdsk)
 {
     unsigned char buf[LOGICAL_BLOCK_SIZE];
-    unsigned long newSum;
+    uint32_t newSum;
     struct nativeFunctions *nFct;
     RETCODE rc2, rc = RC_OK;
 
@@ -744,7 +744,7 @@ adfWriteRDSKblock(struct Device *dev, struct bRDSKblock* rdsk)
     memset(buf,0,LOGICAL_BLOCK_SIZE);
 
     strncpy(rdsk->id,"RDSK",4);
-    rdsk->size = sizeof(struct bRDSKblock)/sizeof(long);
+    rdsk->size = sizeof(struct bRDSKblock)/sizeof(int32_t);
     rdsk->blockSize = LOGICAL_BLOCK_SIZE;
     rdsk->badBlockList = -1;
 
@@ -778,7 +778,7 @@ adfWriteRDSKblock(struct Device *dev, struct bRDSKblock* rdsk)
  *
  */
     RETCODE
-adfReadPARTblock( struct Device* dev, long nSect, struct bPARTblock* blk )
+adfReadPARTblock( struct Device* dev, int32_t nSect, struct bPARTblock* blk )
 {
     UCHAR buf[ sizeof(struct bPARTblock) ];
     struct nativeFunctions *nFct;
@@ -824,10 +824,10 @@ adfReadPARTblock( struct Device* dev, long nSect, struct bPARTblock* blk )
  *
  */
     RETCODE
-adfWritePARTblock(struct Device *dev, long nSect, struct bPARTblock* part)
+adfWritePARTblock(struct Device *dev, int32_t nSect, struct bPARTblock* part)
 {
     unsigned char buf[LOGICAL_BLOCK_SIZE];
-    unsigned long newSum;
+    uint32_t newSum;
     struct nativeFunctions *nFct;
     RETCODE rc2, rc = RC_OK;
 	
@@ -839,7 +839,7 @@ adfWritePARTblock(struct Device *dev, long nSect, struct bPARTblock* part)
     memset(buf,0,LOGICAL_BLOCK_SIZE);
 
     strncpy(part->id,"PART",4);
-    part->size = sizeof(struct bPARTblock)/sizeof(long);
+    part->size = sizeof(struct bPARTblock)/sizeof(int32_t);
     part->blockSize = LOGICAL_BLOCK_SIZE;
     part->vectorSize = 16;
 	part->blockSize = 128;
@@ -871,7 +871,7 @@ adfWritePARTblock(struct Device *dev, long nSect, struct bPARTblock* part)
  *
  */
     RETCODE
-adfReadFSHDblock( struct Device* dev, long nSect, struct bFSHDblock* blk)
+adfReadFSHDblock( struct Device* dev, int32_t nSect, struct bFSHDblock* blk)
 {
     UCHAR buf[sizeof(struct bFSHDblock)];
     struct nativeFunctions *nFct;
@@ -911,10 +911,10 @@ adfReadFSHDblock( struct Device* dev, long nSect, struct bFSHDblock* blk)
  *
  */
     RETCODE
-adfWriteFSHDblock(struct Device *dev, long nSect, struct bFSHDblock* fshd)
+adfWriteFSHDblock(struct Device *dev, int32_t nSect, struct bFSHDblock* fshd)
 {
     unsigned char buf[LOGICAL_BLOCK_SIZE];
-    unsigned long newSum;
+    uint32_t newSum;
     struct nativeFunctions *nFct;
     RETCODE rc = RC_OK;
 
@@ -926,7 +926,7 @@ adfWriteFSHDblock(struct Device *dev, long nSect, struct bFSHDblock* fshd)
     memset(buf,0,LOGICAL_BLOCK_SIZE);
 
     strncpy(fshd->id,"FSHD",4);
-    fshd->size = sizeof(struct bFSHDblock)/sizeof(long);
+    fshd->size = sizeof(struct bFSHDblock)/sizeof(int32_t);
 
     memcpy(buf, fshd, sizeof(struct bFSHDblock));
 #ifdef LITT_ENDIAN
@@ -954,7 +954,7 @@ adfWriteFSHDblock(struct Device *dev, long nSect, struct bFSHDblock* fshd)
  *
  */
    RETCODE
-adfReadLSEGblock(struct Device* dev, long nSect, struct bLSEGblock* blk)
+adfReadLSEGblock(struct Device* dev, int32_t nSect, struct bLSEGblock* blk)
 {
     UCHAR buf[sizeof(struct bLSEGblock)];
     struct nativeFunctions *nFct;
@@ -994,10 +994,10 @@ adfReadLSEGblock(struct Device* dev, long nSect, struct bLSEGblock* blk)
  *
  */
     RETCODE
-adfWriteLSEGblock(struct Device *dev, long nSect, struct bLSEGblock* lseg)
+adfWriteLSEGblock(struct Device *dev, int32_t nSect, struct bLSEGblock* lseg)
 {
     unsigned char buf[LOGICAL_BLOCK_SIZE];
-    unsigned long newSum;
+    uint32_t newSum;
     struct nativeFunctions *nFct;
     RETCODE rc;
 
@@ -1009,7 +1009,7 @@ adfWriteLSEGblock(struct Device *dev, long nSect, struct bLSEGblock* lseg)
     memset(buf,0,LOGICAL_BLOCK_SIZE);
 
     strncpy(lseg->id,"LSEG",4);
-    lseg->size = sizeof(struct bLSEGblock)/sizeof(long);
+    lseg->size = sizeof(struct bLSEGblock)/sizeof(int32_t);
 
     memcpy(buf, lseg, sizeof(struct bLSEGblock));
 #ifdef LITT_ENDIAN
