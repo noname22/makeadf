@@ -1,0 +1,22 @@
+=== MakeAdf ===
+
+MakeAdf is an AdfLib based utility to create adf (amiga disk file) floppy files, ie. floppy images for the amiga.
+The LibAdf version distributed with MakeAdf has been patched to use c99 style stdint.h (int32_t, int16_t, etc.) so that it works properly on x86_64 platforms.
+
+== Compiling & Installing ==
+cd MakeAdf
+make
+make install
+
+if you want, you can also compile unadf
+
+cd Demo
+make
+
+Note: this unadf version will actually work on a x86_64 system
+
+== Authors ==
+MakeAdf is written by Fredrik Hultin ( http://grimnorth.se/~noname/ ) and is based on LibAdf by Laurent Clevy ( http://lclevy.free.fr/adflib/ ).
+
+== License ==
+MakeAdf, like LibAdf, is distributed under the GPLv2 license.
