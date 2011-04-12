@@ -44,7 +44,7 @@ int createFloppy(char* filename, char* label, char** files, int numFiles)
 	}
 
 	// create the filesystem : OFS with DIRCACHE
-	if(adfCreateFlop(floppy, label, FSMASK_DIRCACHE) != RC_OK){
+	if(adfCreateFlop(floppy, label, 0 /*FSMASK_DIRCACHE*/) != RC_OK){
 		fprintf (stderr, "could not create floppy in device / file: %s\n", filename);
 		return -2;
 	}
