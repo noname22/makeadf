@@ -5,12 +5,77 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <sys/stat.h>
+#include <string.h>
+#include <libgen.h>
+#include <dirent.h>
+#include <regex.h>
+#include <stdarg.h>
 
 #include "adflib.h"
+
+typedef struct {
+	bool recursive;
+	char* label;
+	char* adfFile;
+} Settings;
+
+void assertMsg(int eval, char *msg, ...)
+{
+	if(eval){
+		return;
+	}
+
+	va_list fmtargs;
+	char buffer[1024];
+
+	va_start(fmtargs, msg);
+	vsnprintf(buffer, sizeof(buffer) - 1, msg, fmtargs);
+	va_end(fmtargs);
+
+	fprintf(stderr, "%s\n", buffer);
+	exit(1);
+}
 
 void version()
 {
 	printf("\n== MakeAdf v. " MAKEADF_VERSION " ==\n\n");
+}
+
+#if 0
+void adfChdir(struct Volume* vol, const char* dir)
+{
+	struct List* list = adfGetDirEnt(struct Volume* vol, vol->curDirPtr);
+	while(list){
+		struct Entry* entry = (struct Entry*)list->content;
+		if(entry->type == ST_DIR && !strcmp(entry->name, dir)){
+			adfChangeDir(vol, dir);	
+		}
+		list = list->next;
+	}
+	
+	fprintf(stderr, "could not cd into adf dir: %s\n", dir);
+	exit(1);
+}
+#endif
+
+void adfCopy(struct Volume* vol, const char* from, char* to)
+{
+	struct File* file = adfOpenFile(vol, to, "w");
+	assertMsg(file != NULL, "could not create file '%s' in adf", from);
+
+	FILE* in = fopen(from, "r");
+	assertMsg(in != NULL, "could not open (local) file: %s", from);
+
+	while(true){
+		int get = fgetc(in);
+		if(get == EOF){ break; }
+		unsigned char c = (unsigned char)get;
+		adfWriteFile(file, 1, &c);
+	}
+
+	fclose(in);
+	adfCloseFile(file);
 }
 
 void usage()
@@ -22,6 +87,7 @@ void usage()
 		"\n"
 		"  Available options:\n"
 		"    -l [LABEL]    set volume label, default: \"empty\"\n"
+		"    -r            recursively add files\n"
 		"\n"
 		"  Example:\n"
 		"    makeadf -l myfloppy myfloppy.adf file.txt\n"
@@ -29,57 +95,118 @@ void usage()
 	);
 }
 
-int createFloppy(char* filename, char* label, char** files, int numFiles)
+bool isDirectory(char* path)
+{
+	struct stat getStat;
+
+	if(stat(path, &getStat) != 0){
+		fprintf(stderr, "could not access file: %s\n", path);
+		exit(1);
+	}
+
+	return S_ISDIR(getStat.st_mode);
+}
+
+void recursiveAdd(struct Volume* vol, const char* dir, const char* path, int depth)
+{
+	assertMsg(depth < 64, "directory structure too deep");
+
+	struct dirent *entry;
+	struct stat fs;
+
+	DIR* d = opendir(dir);
+	char* adfDir = basename(strdup(dir));
+
+	char myPath[PATH_MAX];
+
+	if(path){
+		snprintf(myPath, PATH_MAX, "%s/%s", path, adfDir);
+	}else{
+		snprintf(myPath, PATH_MAX, "%s", adfDir);
+	}
+	
+	printf(" [d] %s\n", myPath);
+
+	assertMsg(d != NULL, "could not open directory");
+	
+	// Save local directory path
+	char wd[PATH_MAX];
+	assertMsg(getcwd(wd, PATH_MAX - 1) != NULL, "could not get working directory");
+
+	// cd into local dir
+	assertMsg(chdir(dir) >= 0, "could not change to directory: %s", dir);
+
+	if(strcmp(adfDir, ".") != 0 && strcmp(adfDir, "..") != 0){
+		// make directory in adf and cd into it
+		assertMsg(adfCreateDir(vol, vol->curDirPtr, adfDir) == RC_OK, "could not make directory in adf");
+		assertMsg(adfChangeDir(vol, adfDir) == RC_OK, "could not cd into new directory");
+	}
+
+	while ((entry = readdir(d))) {
+		// skip . and ..
+		if (!strcmp(".", entry->d_name) || !strcmp("..", entry->d_name)){
+			continue;
+		}
+
+		assertMsg(stat(entry->d_name, &fs) >= 0, "could not stat: %s", entry->d_name);
+		
+		if ( S_ISDIR(fs.st_mode) ) {
+			recursiveAdd(vol, entry->d_name, myPath, depth + 1);
+		} else {
+			printf(" [f] %s/%s\n", myPath, entry->d_name);
+			adfCopy(vol, entry->d_name, entry->d_name);
+		}
+	}
+	closedir(d);
+	
+	// Change up one dir in adf
+	adfParentDir(vol);
+
+	// Back out to saved local dir
+	assertMsg(chdir(wd) >= 0, "could not change to prev dir");
+}
+
+int createFloppy(Settings* settings, char** files, int numFiles)
 {
 	adfEnvInitDefault();
 
 	// creates a DD floppy empty dump
 	// cyl = 80, heads = 2, sectors = 11. HD floppies has 22 sectors
 
-	struct Device* floppy = adfCreateDumpDevice(filename, 80, 2, 11);
+	struct Device* floppy = adfCreateDumpDevice(settings->adfFile, 80, 2, 11);
 	if(!floppy)
 	{
-		fprintf (stderr, "could not create new dump device / file: %s\n", filename);
-		return -1;
+		fprintf (stderr, "could not create new dump device / file: %s\n", settings->adfFile);
+		return 1;
 	}
 
 	// create the filesystem : OFS with DIRCACHE
-	if(adfCreateFlop(floppy, label, 0 /*FSMASK_DIRCACHE*/) != RC_OK){
-		fprintf (stderr, "could not create floppy in device / file: %s\n", filename);
-		return -2;
+	if(adfCreateFlop(floppy, settings->label, 0 /*FSMASK_DIRCACHE*/) != RC_OK){
+		fprintf (stderr, "could not create floppy in device / file: %s\n", settings->adfFile);
+		return 1;
 	}
 
 	// Mount the volume
 	struct Volume* vol = adfMount(floppy, 0, FALSE);
 
 	if(!vol){
-		fprintf (stderr, "could not mount volume in: %s\n", filename);
-		return -5;
+		fprintf (stderr, "could not mount volume in: %s\n", settings->adfFile);
+		return 1;
 	}
-	
+
 	for (int i = 0; i < numFiles; i++){
-		printf ("Adding: %s\n", files[i]);
-		struct File* file = adfOpenFile(vol, files[i], "w");
-		if (!file) {
-			fprintf (stderr, "could not create file '%s' in adf: %s\n", files[i], filename);
-			return -3;
-		};
-
-		FILE* in = fopen(files[i], "r");
-		if(!in){
-			fprintf (stderr, "could not open (local) file: %s\n", files[i]);
-			return -4;
+		if(isDirectory(files[i])){
+			if(settings->recursive){
+				recursiveAdd(vol, files[i], NULL, 0);
+			}else{
+				printf("skipping direcotry: %s\n", files[i]);
+			}
+			continue;
 		}
 
-		while(true){
-			int get = fgetc(in);
-			if(get == EOF){ break; }
-			unsigned char c = (unsigned char)get;
-			adfWriteFile(file, 1, &c);
-		}
-
-		fclose(in);
-		adfCloseFile(file);
+		char* base = basename(strdup(files[i]));
+		printf(" [f] %s\n", base);
+		adfCopy(vol, files[i], base);
 	}
 
 	adfUnMount(vol);
@@ -94,14 +221,18 @@ int createFloppy(char* filename, char* label, char** files, int numFiles)
 int main(int argc, char** argv)
 {
 	char defaultLabel[] = "empty";
-	char* label = defaultLabel;
+	Settings settings = {false, defaultLabel, NULL};
+
 	int c;
 
-	while ((c = getopt (argc, argv, "l:")) != -1){
+	while ((c = getopt (argc, argv, "rl:")) != -1){
 		switch (c)
 		{
+			case 'r':
+				settings.recursive = true;
+				break;
 			case 'l':
-				label = optarg;
+				settings.label = optarg;
 				break;
 			case '?':
 				if (optopt == 'l'){
@@ -122,5 +253,7 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-	return createFloppy(argv[optind], label, argv + optind + 1, argc - optind - 1);
+	settings.adfFile = argv[optind];
+
+	return createFloppy(&settings, argv + optind + 1, argc - optind - 1);
 }
