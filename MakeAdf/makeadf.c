@@ -18,6 +18,7 @@ typedef struct {
 	bool recursive;
 	char* label;
 	char* adfFile;
+	char* bootBlock;
 } Settings;
 
 void assertMsg(int eval, char *msg, ...)
@@ -86,8 +87,9 @@ void usage()
 		"  makeadf [OPTION] TARGET FILE [...]\n"
 		"\n"
 		"  Available options:\n"
-		"    -l [LABEL]    set volume label, default: \"empty\"\n"
-		"    -r            recursively add files\n"
+		"    -l [LABEL]     set volume label, default: \"empty\"\n"
+		"    -r             recursively add files\n"
+		"    -b [BOOTBLOCK] add a bootblock to the floppy from file\n"
 		"\n"
 		"  Example:\n"
 		"    makeadf -l myfloppy myfloppy.adf file.txt\n"
@@ -166,6 +168,34 @@ void recursiveAdd(struct Volume* vol, const char* dir, const char* path, int dep
 	assertMsg(chdir(wd) >= 0, "could not change to prev dir");
 }
 
+void addBootBlock(struct Volume* vol, char* filename)
+{
+	unsigned char code[1024];
+	memset(code, 0, sizeof(code));
+	FILE* f = fopen(filename, "r");
+
+	assertMsg(f != NULL, "could not open bootblock file: %s", filename);
+
+	fseek(f, 0, SEEK_END);
+	long size = ftell(f);
+	rewind(f);
+
+	if(size != 1024){
+		printf("warning: bootblock file is not 1024 bytes (it's %ld bytes)\n", size);
+	}
+
+	for(int i = 0; i < 1024; i++){
+		int c = fgetc(f);
+		if(c == EOF){
+			break;
+		}
+
+		code[i] = (unsigned char)c;
+	}
+
+	assertMsg(adfInstallBootBlock(vol, code) == RC_OK, "could not install bootblock");
+}
+
 int createFloppy(Settings* settings, char** files, int numFiles)
 {
 	adfEnvInitDefault();
@@ -193,7 +223,7 @@ int createFloppy(Settings* settings, char** files, int numFiles)
 		fprintf (stderr, "could not mount volume in: %s\n", settings->adfFile);
 		return 1;
 	}
-
+	
 	for (int i = 0; i < numFiles; i++){
 		if(isDirectory(files[i])){
 			if(settings->recursive){
@@ -208,7 +238,13 @@ int createFloppy(Settings* settings, char** files, int numFiles)
 		printf(" [f] %s\n", base);
 		adfCopy(vol, files[i], base);
 	}
-
+	
+	// Add the bootblock
+	if(settings->bootBlock){
+		printf("bootblock: %s\n", settings->bootBlock);
+		addBootBlock(vol, settings->bootBlock);
+	}
+	
 	adfUnMount(vol);
 	adfUnMountDev(floppy);
 	adfEnvCleanUp();
@@ -221,13 +257,16 @@ int createFloppy(Settings* settings, char** files, int numFiles)
 int main(int argc, char** argv)
 {
 	char defaultLabel[] = "empty";
-	Settings settings = {false, defaultLabel, NULL};
+	Settings settings = {false, defaultLabel, NULL, NULL};
 
 	int c;
 
-	while ((c = getopt (argc, argv, "rl:")) != -1){
+	while ((c = getopt (argc, argv, "rl:b:")) != -1){
 		switch (c)
 		{
+			case 'b':
+				settings.bootBlock = optarg;
+				break;
 			case 'r':
 				settings.recursive = true;
 				break;
@@ -235,7 +274,7 @@ int main(int argc, char** argv)
 				settings.label = optarg;
 				break;
 			case '?':
-				if (optopt == 'l'){
+				if (optopt == 'l' || optopt == 'b'){
 					fprintf (stderr, "Option -%c requires an argument.\n", optopt);
 				} else if (isprint (optopt)) {
 					fprintf (stderr, "Unknown option `-%c'.\n", optopt);

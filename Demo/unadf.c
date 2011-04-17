@@ -30,6 +30,7 @@
 #include<string.h>
 
 #include "adflib.h"
+#include "adf_raw.h"
 
 /* The portable way used to create a directory is to call the MKDIR command via the
  * system() function.
@@ -53,7 +54,7 @@
 
 void help()
 {
-    puts("unadf [-lrcsp -v n] dumpname.adf [files-with-path] [-d extractdir]");
+    puts("unadf [-lrcsp -v n -b file] dumpname.adf [files-with-path] [-d extractdir]");
     puts("    -l : lists root directory contents");
     puts("    -r : lists directory tree contents");
     puts("    -c : use dircache data (must be used with -l)");
@@ -63,6 +64,7 @@ void help()
     putchar('\n');
     puts("    -p : send extracted files to pipe (unadf -p dump.adf Pics/pic1.gif | xv -)");
     puts("    -d dir : extract to 'dir' directory");
+    puts("    -b file : extract the bootblock of a floppy");
 }
 
 void printEnt(struct Volume *vol, struct Entry* entry, char *path, BOOL sect)
@@ -366,6 +368,30 @@ void processFile(struct Volume *vol, char* name, char* path, unsigned char *extb
 
 }
 
+int extractBootBlock(struct Volume* vol, const char* filename)
+{
+	unsigned char buffer[1024];
+	FILE* f;
+
+	if(adfReadBootBlock(vol, (struct bBootBlock*)buffer) != RC_OK){
+		fprintf(stderr, "could not read bootblock");
+		return RC_ERROR;
+	}
+
+	if((f = fopen(filename, "w")) == NULL){
+		fprintf(stderr, "could not open file for writing: %s", filename);
+		return RC_ERROR;
+	}
+
+	if(!fwrite(buffer, sizeof(buffer), 1, f)){
+		fprintf(stderr, "error writing to file: %s", filename);
+		fclose(f);
+		return RC_ERROR;
+	}
+
+	fclose(f);
+	return RC_OK;
+}
 
 int main(int argc, char* argv[])
 {
@@ -377,6 +403,7 @@ int main(int argc, char* argv[])
     unsigned char *extbuf;
     int vInd, dInd, fInd, aInd;
     BOOL nextArg;
+    char* bbFileName = NULL; /*boot block*/
 
     struct Device *dev;
     struct Volume *vol;
@@ -446,6 +473,12 @@ int main(int argc, char* argv[])
                         dflag = TRUE;
                     }
                     break;
+		case 'b':
+                    if (i + 1 < argc - 1) {
+                        bbFileName = argv[++i];
+                        nextArg = TRUE;
+                    }
+                    break;
                 case 'p':
                     if (xflag) {
                         fprintf(stderr,"sending files to pipe.\n");
@@ -490,7 +523,7 @@ int main(int argc, char* argv[])
     dev = adfMountDev( devname,TRUE );
     if (!dev) {
         sprintf(strbuf,"Can't mount the dump device '%s'.\n", devname);
-        fprintf(stderr, strbuf);
+        fprintf(stderr, "%s\n", strbuf);
         adfEnvCleanUp(); exit(1);
     }
     if (!qflag)
@@ -506,6 +539,19 @@ int main(int argc, char* argv[])
         adfUnMountDev(dev);
         fprintf(stderr, "Can't mount the volume\n");
         adfEnvCleanUp(); exit(1);
+    }
+
+    if(bbFileName){
+        int ret = 0;
+	printf("Extracting bootblock to file: %s\n", bbFileName);
+        if(extractBootBlock(vol, bbFileName) != RC_OK){
+            fprintf(stderr, "failed to extract bootblock\n");
+            ret = 1;
+        }
+        adfUnMount(vol);
+        adfUnMountDev(dev);
+        adfEnvCleanUp();
+        return ret;
     }
 
     if (!qflag) {
@@ -553,8 +599,9 @@ int main(int argc, char* argv[])
             adfFreeDirList(list);
         }
     }
-    else
+    else{
         help();
+    }
 
     free(extbuf);
 
