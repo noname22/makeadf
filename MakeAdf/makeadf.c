@@ -224,6 +224,12 @@ int createFloppy(Settings* settings, char** files, int numFiles)
 		return 1;
 	}
 	
+	// Add the bootblock
+	if(settings->bootBlock){
+		printf("bootblock: %s\n", settings->bootBlock);
+		addBootBlock(vol, settings->bootBlock);
+	}
+	
 	for (int i = 0; i < numFiles; i++){
 		if(isDirectory(files[i])){
 			if(settings->recursive){
@@ -237,12 +243,6 @@ int createFloppy(Settings* settings, char** files, int numFiles)
 		char* base = basename(strdup(files[i]));
 		printf(" [f] %s\n", base);
 		adfCopy(vol, files[i], base);
-	}
-	
-	// Add the bootblock
-	if(settings->bootBlock){
-		printf("bootblock: %s\n", settings->bootBlock);
-		addBootBlock(vol, settings->bootBlock);
 	}
 	
 	adfUnMount(vol);

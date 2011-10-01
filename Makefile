@@ -16,6 +16,7 @@ INSTDIR=/usr/local/unadf
 all: demo lib #tests
 
 lib: $(LIBDIR)/$(LIBNAME)
+	mkdir -p Bin/Linux
 	cp $(LIBDIR)/$(LIBNAME) ./Bin/Linux/
 
 $(LIBDIR)/$(LIBNAME): Lib/defendian.h
@@ -60,6 +61,7 @@ unadf-${VERSION}.spec: gen_spec.sh
 
 binw32:
 	(rm binw32.zip) || true
+	mkdir -p Bin/Win32
 	zip -9r binw32.zip Bin/Win32
 
 backup:
